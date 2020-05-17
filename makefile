@@ -11,16 +11,16 @@ build/ip_lib/ip_lib.o: src/ip_lib/ip_lib.c build/bmp/bmp.o build/ip_lib
 	gcc src/ip_lib/ip_lib.c build/bmp/bmp.o -o build/ip_lib/ip_lib.o -ansi -pedantic -Wall -lm -c
 
 build/ip_lib: build
-	mkdir build/ip_lib
+	mkdir -p build/ip_lib
 
 build/bmp/bmp.o: src/bmp/bmp.c build/bmp
 	gcc src/bmp/bmp.c -o build/bmp/bmp.o -Wall -lm -c
 
 build/bmp: build
-	mkdir build/bmp
+	mkdir -p build/bmp
 
 build: 
-	mkdir build
+	mkdir -p build
 
 clean: 
 	rm -Rf build
