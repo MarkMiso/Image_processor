@@ -1,4 +1,4 @@
-.o
+*.o
 testrun
 debugrun
 test_images
