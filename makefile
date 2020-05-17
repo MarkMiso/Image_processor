@@ -7,11 +7,20 @@ all: src/test_main.c build/ip_lib/ip_lib.o build/bmp/bmp.o
 debug: src/test_main.c build/ip_lib/ip_lib.o buildbmp/bmp.o
 	gcc build/ip_lib/ip_lib.o build/bmp/bmp.o src/test_main.c -o build/debugrun -ansi -pedantic -Wall -lm -g
 
-build/ip_lib/ip_lib.o: src/ip_lib/ip_lib.c build/bmp/bmp.o
+build/ip_lib/ip_lib.o: src/ip_lib/ip_lib.c build/bmp/bmp.o build/ip_lib
 	gcc src/ip_lib/ip_lib.c build/bmp/bmp.o -o build/ip_lib/ip_lib.o -ansi -pedantic -Wall -lm -c
 
-build/bmp/bmp.o: src/bmp/bmp.c
+build/ip_lib: build
+	mkdir build/ip_lib
+
+build/bmp/bmp.o: src/bmp/bmp.c build/bmp
 	gcc src/bmp/bmp.c -o build/bmp/bmp.o -Wall -lm -c
 
+build/bmp: build
+	mkdir build/bmp
+
+build: 
+	mkdir build
+
 clean: 
-	rm build/image_editor build/testrun build/debugrun build/ip_lib/ip_lib.o build/bmp/bmp.o
+	rm -Rf build
