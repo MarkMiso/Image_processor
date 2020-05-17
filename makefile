@@ -1,11 +1,17 @@
-all: main_iplib.c ip_lib/ip_lib.o bmp/bmp.o
-	gcc ip_lib/ip_lib.o bmp/bmp.o main_iplib.c -o image_editor -Wall -lm
+#all: src/main_iplib.c build/ip_lib/ip_lib.o build/bmp/bmp.o
+#	gcc build/ip_lib/ip_lib.o build/bmp/bmp.o src/main_iplib.c -o build/image_editor -Wall -lm
 
-ip_lib/ip_lib.o: ip_lib/ip_lib.c bmp/bmp.o
-	gcc ip_lib/ip_lib.c bmp/bmp.o -o ip_lib/ip_lib.o -Wall -lm -c
+all: src/test_main.c build/ip_lib/ip_lib.o build/bmp/bmp.o
+	gcc build/ip_lib/ip_lib.o build/bmp/bmp.o src/test_main.c -o build/testrun -Wall -lm
 
-bmp/bmp.o: bmp/bmp.c
-	gcc bmp/bmp.c -o bmp/bmp.o -Wall -lm -c
+debug: src/test_main.c build/ip_lib/ip_lib.o buildbmp/bmp.o
+	gcc build/ip_lib/ip_lib.o build/bmp/bmp.o src/test_main.c -o build/debugrun -ansi -pedantic -Wall -lm -g
+
+build/ip_lib/ip_lib.o: src/ip_lib/ip_lib.c build/bmp/bmp.o
+	gcc src/ip_lib/ip_lib.c build/bmp/bmp.o -o build/ip_lib/ip_lib.o -ansi -pedantic -Wall -lm -c
+
+build/bmp/bmp.o: src/bmp/bmp.c
+	gcc src/bmp/bmp.c -o build/bmp/bmp.o -Wall -lm -c
 
 clean: 
-	rm image_editor ip_lib/ip_lib.o bmp/bmp.o
+	rm build/image_editor build/testrun build/debugrun build/ip_lib/ip_lib.o build/bmp/bmp.o
