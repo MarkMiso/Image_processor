@@ -94,6 +94,11 @@ ip_mat * ip_mat_subset(ip_mat * t, unsigned int row_start, unsigned int row_end,
  * */
 ip_mat * ip_mat_concat(ip_mat * a, ip_mat * b, int dimensione);
 
+/* controlla se i valori contenuti in h, w, e k sono diversi dalle dimensioni della ip_mat in
+ * in caso i valori siano diversili croppa alle dimensioni della ip_mat in
+ * ritorna 1 se i valori sono stati modificati 0 se non sono stati modificati
+ */
+
 /**** PARTE 1: OPERAZIONI MATEMATICHE FRA IP_MAT ****/
 /* Esegue la somma di due ip_mat (tutte le dimensioni devono essere identiche).
  *
@@ -132,6 +137,10 @@ ip_mat * ip_mat_add_scalar(ip_mat *a, float c);
 ip_mat * ip_mat_mean(ip_mat * a, ip_mat * b);
 
 /**** PARTE 2: SEMPLICI OPERAZIONI SU IMMAGINI ****/
+/* limita i valori minori di 0 a 0 e maggiori di 255 a 255
+ */
+void ip_mat_clamp(ip_mat *in);
+
 /* Converte un'immagine RGB ad una immagine a scala di grigio.
  * Quest'operazione viene fatta calcolando la media per ogni pixel sui 3 canali
  * e creando una nuova immagine avente per valore di un pixel su ogni canale la media appena calcolata.

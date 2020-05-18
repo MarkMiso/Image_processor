@@ -14,31 +14,37 @@ ip_mat * ip_mat_create(unsigned int h, unsigned int w, unsigned int k, float v) 
     int i, j, n;
 
     ip = (ip_mat *) malloc(sizeof(ip_mat));
-    ip -> w = w;
-    ip -> h = h;
-    ip -> k = k;
 
-    ip -> stat = (stats *) malloc(k * sizeof(stats));
-    for (i = 0; i < k; i++) {
-        ip -> stat[i].min = v;
-        ip -> stat[i].max = v;
-        ip -> stat[i].mean = v;
-    }
+    if (ip) {
+        ip -> w = w;
+        ip -> h = h;
+        ip -> k = k;
 
-    ip -> data = (float ***) malloc(h * sizeof(float**));
-    for (i = 0; i < h; i++) {
-        ip -> data[i] = (float **) malloc(w * sizeof(float*));
-        for (j = 0; j < w; j++) {
-            ip -> data[i][j] = (float *) malloc(k * sizeof(float));
+        ip -> stat = (stats *) malloc(k * sizeof(stats));
+        for (i = 0; i < k; i++) {
+            ip -> stat[i].min = v;
+            ip -> stat[i].max = v;
+            ip -> stat[i].mean = v;
         }
-    }
 
-    for (i = 0; i < h; i++) {
-        for (j = 0; j < w; j++) {
-            for (n = 0; n < k; n++) {
-                ip -> data[i][j][n] = v;
+        ip -> data = (float ***) malloc(h * sizeof(float**));
+        for (i = 0; i < h; i++) {
+            ip -> data[i] = (float **) malloc(w * sizeof(float*));
+            for (j = 0; j < w; j++) {
+                ip -> data[i][j] = (float *) malloc(k * sizeof(float));
             }
         }
+
+        for (i = 0; i < h; i++) {
+            for (j = 0; j < w; j++) {
+                for (n = 0; n < k; n++) {
+                    ip -> data[i][j][n] = v;
+                }
+            }
+        }
+    } else {
+        printf("ip_mat_create: malloc error");
+        exit(1);
     }
 
     return ip;
@@ -179,7 +185,6 @@ float get_normal_random(float mean, float std){
     float num = cos(2*PI*y2)*sqrt(-2.*log(y1));
 
     return mean + num*std;
-
 }
 
 void ip_mat_init_random(ip_mat *t, float mean, float std) {
@@ -192,8 +197,6 @@ void ip_mat_init_random(ip_mat *t, float mean, float std) {
             }
         }
     }
-
-    compute_stats(t);
 }
 
 ip_mat * ip_mat_copy(ip_mat *in) {
@@ -209,8 +212,6 @@ ip_mat * ip_mat_copy(ip_mat *in) {
             }
         }
     }
-
-    compute_stats(out);
 
     return out;
 }
@@ -236,8 +237,6 @@ ip_mat * ip_mat_subset(ip_mat *t, unsigned int row_start, unsigned int row_end, 
         }
         io++;
     }
-
-    compute_stats(sub);
 
     return sub;
 }
@@ -283,9 +282,22 @@ ip_mat * ip_mat_concat(ip_mat * a, ip_mat * b, int dimensione) {
         }
     }
 
-    compute_stats(chain);
-
     return chain;
+}
+
+int fit_to_size(ip_mat *in, int *h, int *w, int *k) {
+    int out;
+
+    if (*h != in -> h || *w != in -> w || *k != in -> k) {
+        out = 1;
+        if (*h > in -> h) *h = in -> h;
+        if (*w > in -> w) *w = in -> w;
+        if (*k > in -> k) *k = in -> k;
+    } else {
+        out = 0;
+    }
+
+    return out;
 }
 
 /**** OPERAZIONI MATEMATICHE ****/
@@ -308,8 +320,6 @@ ip_mat * ip_mat_sum(ip_mat *a, ip_mat *b) {
         exit(1);
     }
 
-    compute_stats(sum);
-
     return sum;
 }
 
@@ -331,30 +341,29 @@ ip_mat * ip_mat_sub(ip_mat *a, ip_mat *b) {
         exit(1);
     }
 
-    compute_stats(sub);
-
     return sub;
 }
 
 ip_mat * ip_mat_mean(ip_mat *a, ip_mat *b) {
     ip_mat *mean;
-    int i, j, k;
-    if (a -> h == b -> h &&  a -> w == b -> w && a -> k == b -> k) {
-        mean = ip_mat_create(a -> h, a -> w, a -> k, 0.0);
+    int i, j, l;
+    int h = a -> h;
+    int w = a -> w;
+    int k = a -> k;
 
-        for (i = 0; i < a -> h; i++) {
-            for (j = 0; j < a -> w; j++) {
-                for (k = 0; k < a -> k; k++) {
-                    set_val(mean, i, j, k, (get_val(a, i, j, k) + get_val(b, i, j, k)) / 2);
-                }
-            }
-        }
-    } else {
-        printf("ip_mat_mean: Invalid input");
-        exit(1);
+    if (fit_to_size(b, &h, &w, &k)) {
+        printf("ip_mat_mean: Warning \nInput ip_mats have different dimentions the output ip_mat will be cropped to the smallest dimentions \n");
     }
 
-    compute_stats(mean);
+    mean = ip_mat_create(h, w, k, 0.0);
+
+    for (i = 0; i < h; i++) {
+        for (j = 0; j < w; j++) {
+            for (l = 0; l < k; l++) {
+                set_val(mean, i, j, l, (get_val(a, i, j, l) + get_val(b, i, j, l)) / 2);
+            }
+        }
+    }
 
     return mean;
 }
@@ -372,8 +381,6 @@ ip_mat * ip_mat_mul_scalar(ip_mat *a, float c) {
         }
     }
 
-    compute_stats(mult);
-
     return mult;
 }
 
@@ -390,12 +397,31 @@ ip_mat * ip_mat_add_scalar(ip_mat *a, float c) {
         }
     }
 
-    compute_stats(sum);
-
     return sum;
 }
 
 /**** OPERAZIONI SU IMMAGINI ****/
+
+void ip_mat_clamp(ip_mat *in) {
+    int i, j, k;
+    float val;
+
+    for (i = 0; i < in -> h; i++) {
+        for (j = 0; j < in -> w; j++) {
+            for (k = 0; k < in -> k; k++) {
+                val = get_val(in, i, j, k);
+
+                if (val < 0) {
+                    set_val(in, i, j, k, 0);
+                } else {
+                    if (val > 255) {
+                        set_val(in, i, j, k, 255);
+                    }
+                }
+            }
+        }
+    }
+}
 
 ip_mat * ip_mat_to_gray_scale(ip_mat * in) {
     ip_mat *gray_scale;
@@ -412,12 +438,65 @@ ip_mat * ip_mat_to_gray_scale(ip_mat * in) {
                 mean += get_val(in, i, j, k);
             }
 
-            set_val(gray_scale, i, j, k, mean / (in -> k));
+            mean = mean / (in -> k);
+
+            for (k = 0; k < in -> k; k++) {
+                set_val(gray_scale, i, j, k, mean);
+            }
         }
     }
-
-    compute_stats(gray_scale);
 
     return gray_scale;
 }
 
+ip_mat * ip_mat_blend(ip_mat *a, ip_mat *b, float alpha) {
+    ip_mat *blend;
+    int i, j, l, val;
+    int h = a -> h;
+    int w = a -> w;
+    int k = a -> k;
+
+    if (alpha < 0) {
+        printf("ip_mat_blend: Warning \n");
+        printf("Input alpha value out of range, capped at 0");
+    }
+
+    if (alpha > 1) {
+        printf("ip_mat_blend: Warning \n");
+        printf("Input alpha value out of range, capped at 1");
+    }
+
+    if (fit_to_size(b, &h, &w, &k)) {
+        printf("ip_mat_blend: Warning \nInput ip_mats have different dimentions the output ip_mat will be cropped to the smallest dimentions \n");
+    }
+
+    blend = ip_mat_create(h, w, k, 0.0);
+
+    for (i = 0; i < h; i++) {
+        for (j = 0; j < w; j++) {
+            for (l = 0; l < k; l ++) {
+                val = (alpha * get_val(a, i, j, l)) + ((1 - alpha) * get_val(b, i, j, l));
+                set_val(blend, i, j, l, val);
+            }
+        }
+    }
+
+    return blend;
+}
+
+ip_mat * ip_mat_brighten(ip_mat *a, float bright) {
+    return ip_mat_add_scalar(a, bright);
+}
+
+ip_mat * ip_mat_corrupt(ip_mat *a, float amount) {
+    ip_mat *noise;
+    ip_mat *out;
+
+    noise = ip_mat_create(a -> h, a -> w, a -> k, 0.0);
+    ip_mat_init_random(noise, 0, amount / 2);
+
+    out = ip_mat_sum(a, noise);
+    ip_mat_free(noise);
+
+    return out;
+}
