@@ -218,8 +218,8 @@ ip_mat * ip_mat_subset(ip_mat *t, unsigned int row_start, unsigned int row_end, 
     ip_mat *sub;
 
     if (row_start > row_end || col_start > col_end){
-        printf("ip_mat_subset: Error \n");
-        printf("Starting row and column must be smaller than endig row and colum");
+        printf("\033[0;31m" "ip_mat_subset: Input Error\n" "\033[0m");
+        printf("Starting row and column must be smaller than endig row and colum\n");
         exit(1);
     }
 
@@ -227,8 +227,8 @@ ip_mat * ip_mat_subset(ip_mat *t, unsigned int row_start, unsigned int row_end, 
     col = col_end - col_start;
 
     if (t -> h < row || t -> w < col) {
-        printf("ip_mat_subset: Error \n");
-        printf("Subset dimentions must be smaller than input ip_mat dimentions");
+        printf("\033[0;31m" "ip_mat_subset: Input Error\n" "\033[0m");
+        printf("Subset dimentions must be smaller than input ip_mat dimentions\n");
         exit(1);
     }
 
@@ -249,20 +249,15 @@ ip_mat * ip_mat_subset(ip_mat *t, unsigned int row_start, unsigned int row_end, 
     return sub;
 }
 
-/* data una ip_mat e 3 valori controlla se sono maggiori delle dimensioni di ip_mat
- * i valori maggiori vengono croppati alle dimensioni di ip_mat
- * ritorna 1 se i valori sono stati alterati, 0 altrimenti
+/* Date 2 ip_mat ritorna 1 se hanno dimensioni diverese, 0 altrimenti
  */
-int fit_to_size(ip_mat *in, unsigned int *h, unsigned int *w, unsigned int *k) {
+int different_size(ip_mat *a, ip_mat *b) {
     int out;
 
-    if (*h != in -> h || *w != in -> w || *k != in -> k) {
-        out = 1;
-        if (*h > in -> h) *h = in -> h;
-        if (*w > in -> w) *w = in -> w;
-        if (*k > in -> k) *k = in -> k;
-    } else {
+    if (a -> h == b -> h && a -> w == b -> w && a -> k == b -> k) {
         out = 0;
+    } else {
+        out = 1;
     }
 
     return out;
@@ -271,61 +266,46 @@ int fit_to_size(ip_mat *in, unsigned int *h, unsigned int *w, unsigned int *k) {
 ip_mat * ip_mat_concat(ip_mat * a, ip_mat * b, int dimensione) {
     ip_mat *chain;
     unsigned int h, w, k;
-    unsigned int ah, aw, ak;
-    unsigned int bh, bw, bk;
     unsigned int i, j, l;
  
-    ah = a -> h;
-    aw = a -> w;
-    ak = a -> k;
+    h = a -> h;
+    w = a -> w;
+    k = a -> k;
 
-    if (fit_to_size(b, &ah, &aw, &ak)) {
-        printf("ip_mat_concat: Warning \n");
-        printf("Input ip_mat of different sizes, output ip_mat will be cropped to the smallest size \n");
+    if (different_size(a, b)) {
+        printf("\033[0;33m" "ip_mat_concat: Warning\n" "\033[0m");
+        printf("Input arguments have different dimentions, this might lead to errors\n");
     } 
 
-    bh = b -> h;
-    bw = b -> w;
-    bk = b -> k;
-
-    if (fit_to_size(a, &bh, &bw, &bk)) {
-        printf("ip_mat_concat: Warning \n");
-        printf("Input ip_mat of different sizes, output ip_mat will be cropped to the smallest size \n");
-    } 
-
-    h = ah;
-    w = aw;
-    k = ak;
-    
     if (dimensione == 0) {
-        h += bh;
+        h += b -> h;
     } else if (dimensione == 1) {
-        w += bw;
+        w += b -> w;
     } else if (dimensione == 2) {
-        k += bk;
+        k += b -> k;
     } else {
-        printf("ip_mat_concat: Invalid input \n");
+        printf("\033[0;31m" "ip_mat_concat: Input Error\n" "\033[0m");
         printf("Third argument must have a value between 0 and 2 \n");
         exit(1);
     }
 
     chain = ip_mat_create(h, w, k, 0);
 
-    for (i = 0; i < ah; i++) {
-        for (j = 0; j < aw; j++) {
-            for (l = 0; l < ak; l++) {
+    for (i = 0; i < a -> h; i++) {
+        for (j = 0; j < a -> w; j++) {
+            for (l = 0; l < a -> k; l++) {
                 set_val(chain, i, j, l, get_val(a, i, j, l));
             }
         }
     }
 
-    h -= bh;
-    w -= bw;
-    k -= bk;
+    h -= b -> h;
+    w -= b -> w;
+    k -= b -> k;
 
-    for (i = 0; i < bh; i++) {
-        for (j = 0; j < bw; j++) {
-            for (l = 0; l < bk; l++) {
+    for (i = 0; i < b -> h; i++) {
+        for (j = 0; j < b -> w; j++) {
+            for (l = 0; l < b -> k; l++) {
                 set_val(chain, i + h, j + w, l + k, get_val(b, i, j, l));
             }
         }
@@ -340,20 +320,20 @@ ip_mat * ip_mat_sum(ip_mat *a, ip_mat *b) {
     ip_mat *sum;
     unsigned int i, j, k;
 
-    if (a -> h == b -> h &&  a -> w == b -> w && a -> k == b -> k) {
-        sum = ip_mat_create(a -> h, a -> w, a -> k, 0);
+    if (different_size(a, b)) {
+        printf("\033[0;31m" "ip_mat_sum: Input Error\n" "\033[0m");
+        printf("Input arguments must have same dimentions\n");
+        exit(1);
+    }
 
-        for (i = 0; i < a -> h; i++) {
-            for (j = 0; j < a -> w; j++) {
-                for (k = 0; k < a -> k; k++) {
-                    set_val(sum, i, j, k, get_val(a, i, j, k) + get_val(b, i, j, k));
-                }
+    sum = ip_mat_create(a -> h, a -> w, a -> k, 0);
+
+    for (i = 0; i < a -> h; i++) {
+        for (j = 0; j < a -> w; j++) {
+            for (k = 0; k < a -> k; k++) {
+                set_val(sum, i, j, k, get_val(a, i, j, k) + get_val(b, i, j, k));
             }
         }
-    } else {
-        printf("ip_mat_sum: Error");
-        printf("Input arguments must have same dimentions");
-        exit(1);
     }
 
     return sum;
@@ -363,20 +343,20 @@ ip_mat * ip_mat_sub(ip_mat *a, ip_mat *b) {
     ip_mat *sub;
     unsigned int i, j, k;
 
-    if (a -> h == b -> h &&  a -> w == b -> w && a -> k == b -> k) {
-        sub = ip_mat_create(a -> h, a -> w, a -> k, 0);
+    if (different_size(a, b)) {
+        printf("\033[0;31m" "ip_mat_sub: Input Error\n" "\033[0m");
+        printf("Input arguments must have same dimentions\n");
+        exit(1);
+    }
 
-        for (i = 0; i < a -> h; i++) {
-            for (j = 0; j < a -> w; j++) {
-                for (k = 0; k < a -> k; k++) {
-                    set_val(sub, i, j, k, get_val(a, i, j, k) - get_val(b, i, j, k));
-                }
+    sub = ip_mat_create(a -> h, a -> w, a -> k, 0);
+
+    for (i = 0; i < a -> h; i++) {
+        for (j = 0; j < a -> w; j++) {
+            for (k = 0; k < a -> k; k++) {
+                set_val(sub, i, j, k, get_val(a, i, j, k) - get_val(b, i, j, k));
             }
         }
-    } else {
-        printf("ip_mat_sub: Error");
-        printf("Input arguments must have same dimentions");
-        exit(1);
     }
 
     return sub;
@@ -389,9 +369,10 @@ ip_mat * ip_mat_mean(ip_mat *a, ip_mat *b) {
     unsigned int w = a -> w;
     unsigned int k = a -> k;
 
-    if (fit_to_size(b, &h, &w, &k)) {
-        printf("ip_mat_mean: Warning \n");
-        printf("Input ip_mat of different sizes, output ip_mat will be cropped to the smallest size \n");
+    if (different_size(a, b)) {
+        printf("\033[0;31m" "ip_mat_mean: Input Error\n" "\033[0m");
+        printf("Input arguments must have same dimentions\n");
+        exit(1);
     }
 
     mean = ip_mat_create(h, w, k, 0);
@@ -509,24 +490,28 @@ ip_mat * ip_mat_to_gray_scale(ip_mat * in) {
 
 ip_mat * ip_mat_blend(ip_mat *a, ip_mat *b, float alpha) {
     ip_mat *blend;
-    unsigned int i, j, l, val;
+    unsigned int i, j, l;
     unsigned int h = a -> h;
     unsigned int w = a -> w;
     unsigned int k = a -> k;
+    float val;
 
     if (alpha < 0) {
-        printf("ip_mat_blend: Warning \n");
-        printf("Input alpha value out of range, capped at 0");
+        printf("\033[0;33m" "ip_mat_blend: Warning\n" "\033[0m");
+        printf("Input alpha value out of range, capped at 0\n");
+        alpha = 0;
     }
 
     if (alpha > 1) {
-        printf("ip_mat_blend: Warning \n");
-        printf("Input alpha value out of range, capped at 1");
+        printf("\033[0;33m" "ip_mat_blend: Warning\n" "\033[0m");
+        printf("Input alpha value out of range, capped at 1\n");
+        alpha = 1;
     }
 
-    if (fit_to_size(b, &h, &w, &k)) {
-        printf("ip_mat_blend: Warning \n");
-        printf("Input ip_mat of different sizes, output ip_mat will be cropped to the smallest size \n");
+    if (different_size(a, b)) {
+        printf("\033[0;31m" "ip_mat_blend: Input Error\n" "\033[0m");
+        printf("Input arguments must have same dimentions\n");
+        exit(1);
     }
 
     blend = ip_mat_create(h, w, k, 0);
@@ -662,6 +647,9 @@ ip_mat * create_average_filter(unsigned int h, unsigned int w, unsigned int k) {
     ip_mat *average;
     float c;
 
+    if (h % 2 == 0) h--;
+    if (w % 2 == 0) w--;
+
     c = 1.0 / (h * w);
     average = ip_mat_create(h, w, k, c);
 
@@ -669,17 +657,20 @@ ip_mat * create_average_filter(unsigned int h, unsigned int w, unsigned int k) {
 }
 
 ip_mat * create_gaussian_filter(unsigned int h, unsigned int w, unsigned int k, float sigma) {
-    ip_mat *gaus;
-    ip_mat *norm_gaus;
+    ip_mat *gauss;
+    ip_mat *norm_gauss;
     unsigned int i, j, l;
     int cx, cy, x, y;
     float val, exponent, counter;
+
+    if (h % 2 == 0) h--;
+    if (w % 2 == 0) w--;
 
     cx = (h - 1) / 2;
     cy = (w - 1) / 2;
     counter = 0;
 
-    gaus = ip_mat_create(h, w, k, 0);
+    gauss = ip_mat_create(h, w, k, 0);
 
     for (i = 0; i < h; i++) {
         for (j = 0; j < w; j++) {
@@ -690,13 +681,13 @@ ip_mat * create_gaussian_filter(unsigned int h, unsigned int w, unsigned int k, 
             counter += val;
             
             for (l = 0; l < k; l++) {
-                set_val(gaus, i, j, l, val);
+                set_val(gauss, i, j, l, val);
             }
         }
     }
 
-    norm_gaus = ip_mat_mul_scalar(gaus, 1 / counter);
-    ip_mat_free(gaus);
+    norm_gauss = ip_mat_mul_scalar(gauss, 1 / counter);
+    ip_mat_free(gauss);
 
-    return norm_gaus;
+    return norm_gauss;
 }
