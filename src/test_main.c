@@ -204,20 +204,130 @@ int main () {
     ip_mat *in_img = NULL;
     ip_mat *out_img = NULL;
 
-    b = bm_load("caf.bmp");
+    b = bm_load("flower2.bmp");
     in_img = bitmap_to_ip_mat(b);
 
     bm_free(b);
 
     out_img = ip_mat_corrupt(in_img, 100);
     ip_mat_free(in_img);
-    ip_mat_clamp(out_img);
 
     b_out = ip_mat_to_bitmap(out_img);
     ip_mat_free(out_img);
 
     bm_save(b_out, "Noise_output.bmp");
     bm_free(b_out);
+
+    /* padding test */
+    /*
+
+    ip_mat *a;
+    ip_mat *b;
+
+    a = ip_mat_create(3, 3, 2, 1.0);
+    b = ip_mat_padding(a, 1, 2);
+
+    ip_mat_show(a);
+    ip_mat_show(b);
+
+    ip_mat_free(a);
+    ip_mat_free(b);
+    */
+
+    /* convolve test */
+    /*
+
+    ip_mat *a;
+    ip_mat *b;
+    ip_mat *f;
+
+    a = ip_mat_create(5, 5, 2, 1.0);
+    f = ip_mat_create(3, 3, 2, 2.0);
+    set_val(a, 2, 2, 1, 2.0);
+
+    b = ip_mat_convolve(a, f);
+
+    ip_mat_show(a);
+    ip_mat_show(b);
+
+    ip_mat_free(a);
+    ip_mat_free(b);
+    ip_mat_free(f);
+    */
+
+    /* sharpen/edge/emboss test */
+    /*
+
+    Bitmap *b = NULL;
+    Bitmap *b_out = NULL;
+    ip_mat *in_img = NULL;
+    ip_mat *out_img = NULL;
+    ip_mat *filter = NULL;
+
+    b = bm_load("flower.bmp");
+    in_img = bitmap_to_ip_mat(b);
+    filter = create_emboss_filter();
+
+    ip_mat_show(filter);
+
+    bm_free(b);
+
+    out_img = ip_mat_convolve(in_img, filter);
+    ip_mat_free(in_img);
+    ip_mat_clamp(out_img);
+
+    b_out = ip_mat_to_bitmap(out_img);
+    ip_mat_free(out_img);
+
+    bm_save(b_out, "Emboss_output.bmp");
+    bm_free(b_out);
+    */
+
+    /* average/gaussian test */
+    /*
+
+    Bitmap *b = NULL;
+    Bitmap *b_out = NULL;
+    ip_mat *in_img = NULL;
+    ip_mat *out_img = NULL;
+    ip_mat *filter = NULL;
+
+    b = bm_load("flower.bmp");
+    in_img = bitmap_to_ip_mat(b);
+    filter = create_gaussian_filter(9, 9, in_img -> k, 5);
+
+    ip_mat_show(filter);
+
+    bm_free(b);
+
+    out_img = ip_mat_convolve(in_img, filter);
+    ip_mat_free(in_img);
+    clamp(out_img, 0, 255);
+
+    b_out = ip_mat_to_bitmap(out_img);
+    ip_mat_free(out_img);
+
+    bm_save(b_out, "Gaussian_output.bmp");
+    bm_free(b_out);
+    */
+
+    /* clamp/rescale test */
+    /*
+
+    ip_mat *a;
+
+    a = ip_mat_create(3, 3, 3, 0.0);
+    ip_mat_init_random(a, 0, 10);
+    ip_mat_show(a);
+    ip_mat_show_stats(a);
+
+    clamp(a, 0, 5);
+
+    ip_mat_show(a);
+    ip_mat_show_stats(a);
+
+    ip_mat_free(a);
+    */
 
     return 0;
 }

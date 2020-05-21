@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "ip_lib.h"
+#include "ip_lib/ip_lib.h"
 #include "bmp/bmp.h"
 
 void show_help(){
