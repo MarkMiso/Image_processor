@@ -1,3 +1,13 @@
+/* 
+ * Laboratorio di programmazione A.A 2019/2020
+ *
+ * Gruppo: 95
+ * Partecipanti: Grassi Marco
+ *
+ * Tutor: Sebastiano Vascon
+ *
+ * */
+
 #include <stdio.h>
 #include <string.h>
 #include "ip_lib/ip_lib.h"

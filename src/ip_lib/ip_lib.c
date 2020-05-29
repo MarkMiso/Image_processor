@@ -1,12 +1,24 @@
-/*
- Created by Sebastiano Vascon on 23/03/20.
-*/
+/* 
+ * Laboratorio di programmazione A.A 2019/2020
+ *
+ * Gruppo: 95
+ * Partecipanti: Grassi Marco
+ *
+ * Tutor: Sebastiano Vascon
+ *
+ * */
 
 #include <stdio.h>
 #include "ip_lib.h"
 #include "../bmp/bmp.h"
 
-/**** GENERAZIONE ADT ****/
+#define malloc_error(str) "\033[0;33m" str ": Error\n" "\033[0m" "Error during memory allocation\n"
+#define null_error(str) "\033[0;33m" str ": Error\n" "\033[0m" "Invalid input, ip_lib not initialized\n"
+#define dim_error(str) "\033[0;31m" str ": Invalid input\n" "\033[0m" "Input arguments must have same dimentions\n"
+#define error(msg) printf(msg); exit(1)
+#define check_null(t, str) if (t == NULL) {error(null_error(str));}
+
+/**** STRUTTURA DATI ****/
 
 ip_mat * ip_mat_create(unsigned int h, unsigned int w, unsigned int k, float v) {
     ip_mat *ip;
@@ -14,11 +26,20 @@ ip_mat * ip_mat_create(unsigned int h, unsigned int w, unsigned int k, float v) 
 
     ip = (ip_mat *) malloc(sizeof(ip_mat));
 
+    if (!ip) {
+        error(malloc_error("ip_mat_create"));
+    }
+
     ip -> w = w;
     ip -> h = h;
     ip -> k = k;
 
     ip -> stat = (stats *) malloc(k * sizeof(stats));
+
+    if (!ip -> stat) {
+        error(malloc_error("ip_mat_create"));
+    }
+
     for (i = 0; i < k; i++) {
         ip -> stat[i].min = v;
         ip -> stat[i].max = v;
@@ -26,10 +47,24 @@ ip_mat * ip_mat_create(unsigned int h, unsigned int w, unsigned int k, float v) 
     }
 
     ip -> data = (float ***) malloc(h * sizeof(float**));
+
+    if (!ip -> data) {
+        error(malloc_error("ip_mat_create"));
+    }
+
     for (i = 0; i < h; i++) {
         ip -> data[i] = (float **) malloc(w * sizeof(float*));
+
+        if (!ip -> data[i]) {
+            error(malloc_error("ip_mat_create"));
+        }
+
         for (j = 0; j < w; j++) {
             ip -> data[i][j] = (float *) malloc(k * sizeof(float));
+
+            if (!ip -> data[i][j]) {
+                error(malloc_error("ip_mat_create"));
+            }
         }
     }
 
@@ -43,6 +78,7 @@ ip_mat * ip_mat_create(unsigned int h, unsigned int w, unsigned int k, float v) 
 
     return ip;
 }
+
 
 void ip_mat_free(ip_mat *a) {
     unsigned int i, j;
@@ -65,6 +101,8 @@ void ip_mat_free(ip_mat *a) {
 void compute_stats(ip_mat *t) {
     float accumulator, val;
     unsigned int  i, j, k;
+
+    check_null(t, "compute_stats");
 
     for (i = 0; i < t -> k; i++) {
         accumulator = 0;
@@ -90,6 +128,7 @@ void compute_stats(ip_mat *t) {
 
 void ip_mat_show(ip_mat * t){
     unsigned int i,l,j;
+    check_null(t, "ip_mat_show");
     printf("Matrix of size %d x %d x %d (hxwxk)\n",t->h,t->w,t->k);
     for (l = 0; l < t->k; l++) {
         printf("Slice %d\n", l);
@@ -118,13 +157,17 @@ void ip_mat_show_stats(ip_mat * t){
 
 ip_mat * bitmap_to_ip_mat(Bitmap * img){
     unsigned int i=0,j=0;
-
     unsigned char R,G,B;
+    unsigned int h;
+    unsigned int w;
+    ip_mat * out;
 
-    unsigned int h = img->h;
-    unsigned int w = img->w;
+    check_null(img, "bitmap_to_ip_mat");
 
-    ip_mat * out = ip_mat_create(h, w,3,0);
+    h = img->h;
+    w = img->w;
+
+    out = ip_mat_create(h, w,3,0);
 
     for (i = 0; i < h; i++)              /* rows */
     {
@@ -141,10 +184,13 @@ ip_mat * bitmap_to_ip_mat(Bitmap * img){
 }
 
 Bitmap * ip_mat_to_bitmap(ip_mat * t){
-
-    Bitmap *b = bm_create(t->w,t->h);
-
     unsigned int i, j;
+    Bitmap *b ;
+
+    check_null(t, "ip_mat_to_bitmap");
+
+    b = bm_create(t->w,t->h);
+
     for (i = 0; i < t->h; i++)              /* rows */
     {
         for (j = 0; j < t->w; j++)          /* columns */
@@ -158,6 +204,8 @@ Bitmap * ip_mat_to_bitmap(ip_mat * t){
 }
 
 float get_val(ip_mat * a, unsigned int i,unsigned int j,unsigned int k){
+    check_null(a, "get_val");
+
     if(i<a->h && j<a->w &&k<a->k){  /* j>=0 and k>=0 and i>=0 is non sense*/
         return a->data[i][j][k];
     }else{
@@ -167,6 +215,8 @@ float get_val(ip_mat * a, unsigned int i,unsigned int j,unsigned int k){
 }
 
 void set_val(ip_mat * a, unsigned int i,unsigned int j,unsigned int k, float v){
+    check_null(a, "set_val");
+
     if(i<a->h && j<a->w &&k<a->k){
         a->data[i][j][k]=v;
     }else{
@@ -185,6 +235,8 @@ float get_normal_random(float mean, float std){
 
 void ip_mat_init_random(ip_mat *t, float mean, float std) {
     unsigned int i, j, k;
+
+    check_null(t, "ip_mat_init_random");
     
     for (i = 0; i < t -> h; i++) {
         for (j = 0; j < t -> w; j++) {
@@ -198,6 +250,8 @@ void ip_mat_init_random(ip_mat *t, float mean, float std) {
 ip_mat * ip_mat_copy(ip_mat *in) {
     unsigned int i, j, k;
     ip_mat *out;
+
+    check_null(in, "ip_mat_copy");
 
     out = ip_mat_create(in -> h, in -> w, in -> k, 0);
 
@@ -217,19 +271,17 @@ ip_mat * ip_mat_subset(ip_mat *t, unsigned int row_start, unsigned int row_end, 
     unsigned int row, col;
     ip_mat *sub;
 
+    check_null(t, "ip_mat_subset");
+
     if (row_start > row_end || col_start > col_end){
-        printf("\033[0;31m" "ip_mat_subset: Input Error\n" "\033[0m");
-        printf("Starting row and column must be smaller than endig row and colum\n");
-        exit(1);
+        error("\033[0;31m" "ip_mat_subset: Invalid input\n" "\033[0m" "Starting row and column must be smaller than endig row and colum\n");
     }
 
     row = row_end - row_start;
     col = col_end - col_start;
 
     if (t -> h < row || t -> w < col) {
-        printf("\033[0;31m" "ip_mat_subset: Input Error\n" "\033[0m");
-        printf("Subset dimentions must be smaller than input ip_mat dimentions\n");
-        exit(1);
+        error("\033[0;31m" "ip_mat_subset: Invalid input\n" "\033[0m" "Subset dimentions must be smaller than input ip_mat dimentions\n");
     }
 
     sub = ip_mat_create(row, col, t -> k, 0);
@@ -267,6 +319,9 @@ ip_mat * ip_mat_concat(ip_mat * a, ip_mat * b, int dimensione) {
     ip_mat *chain;
     unsigned int h, w, k;
     unsigned int i, j, l;
+
+    check_null(a, "ip_mat_concat");
+    check_null(b, "ip_mat_concat");
  
     h = a -> h;
     w = a -> w;
@@ -284,9 +339,7 @@ ip_mat * ip_mat_concat(ip_mat * a, ip_mat * b, int dimensione) {
     } else if (dimensione == 2) {
         k += b -> k;
     } else {
-        printf("\033[0;31m" "ip_mat_concat: Input Error\n" "\033[0m");
-        printf("Third argument must have a value between 0 and 2 \n");
-        exit(1);
+        error("\033[0;31m" "ip_mat_concat: Invalid input\n" "\033[0m" "Third argument must have a value between 0 and 2 \n");
     }
 
     chain = ip_mat_create(h, w, k, 0);
@@ -320,10 +373,11 @@ ip_mat * ip_mat_sum(ip_mat *a, ip_mat *b) {
     ip_mat *sum;
     unsigned int i, j, k;
 
+    check_null(a, "ip_mat_sum");
+    check_null(b, "ip_mat_sum");
+
     if (different_size(a, b)) {
-        printf("\033[0;31m" "ip_mat_sum: Input Error\n" "\033[0m");
-        printf("Input arguments must have same dimentions\n");
-        exit(1);
+        error(dim_error("ip_mat_sum"));
     }
 
     sum = ip_mat_create(a -> h, a -> w, a -> k, 0);
@@ -343,10 +397,11 @@ ip_mat * ip_mat_sub(ip_mat *a, ip_mat *b) {
     ip_mat *sub;
     unsigned int i, j, k;
 
+    check_null(a, "ip_mat_sub");
+    check_null(b, "ip_mat_sub");
+
     if (different_size(a, b)) {
-        printf("\033[0;31m" "ip_mat_sub: Input Error\n" "\033[0m");
-        printf("Input arguments must have same dimentions\n");
-        exit(1);
+        error(dim_error("ip_mat_sub"));
     }
 
     sub = ip_mat_create(a -> h, a -> w, a -> k, 0);
@@ -369,10 +424,11 @@ ip_mat * ip_mat_mean(ip_mat *a, ip_mat *b) {
     unsigned int w = a -> w;
     unsigned int k = a -> k;
 
+    check_null(a, "ip_mat_mean");
+    check_null(b, "ip_mat_mean");
+
     if (different_size(a, b)) {
-        printf("\033[0;31m" "ip_mat_mean: Input Error\n" "\033[0m");
-        printf("Input arguments must have same dimentions\n");
-        exit(1);
+        error(dim_error("ip_mat_mean"));
     }
 
     mean = ip_mat_create(h, w, k, 0);
@@ -392,6 +448,8 @@ ip_mat * ip_mat_mul_scalar(ip_mat *a, float c) {
     ip_mat *mult;
     unsigned int i, j, k;
 
+    check_null(a, "ip_mat_mul_scalar");
+
     mult = ip_mat_create(a -> h, a -> w, a -> k, 0);
 
     for (i = 0; i < a -> h; i++) {
@@ -408,6 +466,8 @@ ip_mat * ip_mat_mul_scalar(ip_mat *a, float c) {
 ip_mat * ip_mat_add_scalar(ip_mat *a, float c) {
     ip_mat *sum;
     unsigned int i, j, k;
+
+    check_null(a, "ip_mat_add_scalar");
 
     sum = ip_mat_create(a -> h, a -> w, a -> k, 0);
 
@@ -427,6 +487,8 @@ ip_mat * ip_mat_add_scalar(ip_mat *a, float c) {
 void clamp(ip_mat *t, float low, float high) {
     unsigned int i, j, k;
     float val;
+
+    check_null(t, "clamp");
 
     for (i = 0; i < t -> h; i++) {
         for (j = 0; j < t -> w; j++) {
@@ -449,6 +511,8 @@ void rescale(ip_mat *t, float new_max) {
     unsigned int i, j, k;
     float val;
 
+    check_null(t, "rescale");
+
     compute_stats(t);
 
     for (i = 0; i < t -> h; i++) {
@@ -466,6 +530,8 @@ ip_mat * ip_mat_to_gray_scale(ip_mat * in) {
     ip_mat *gray_scale;
     unsigned int i, j, k;
     float mean;
+
+    check_null(in, "ip_mat_to_gray_scale");
 
     gray_scale = ip_mat_create(in -> h, in -> w, in -> k, 0);
 
@@ -496,6 +562,9 @@ ip_mat * ip_mat_blend(ip_mat *a, ip_mat *b, float alpha) {
     unsigned int k = a -> k;
     float val;
 
+    check_null(a, "ip_mat_blend");
+    check_null(b, "ip_mat_blend");
+
     if (alpha < 0) {
         printf("\033[0;33m" "ip_mat_blend: Warning\n" "\033[0m");
         printf("Input alpha value out of range, capped at 0\n");
@@ -509,9 +578,7 @@ ip_mat * ip_mat_blend(ip_mat *a, ip_mat *b, float alpha) {
     }
 
     if (different_size(a, b)) {
-        printf("\033[0;31m" "ip_mat_blend: Input Error\n" "\033[0m");
-        printf("Input arguments must have same dimentions\n");
-        exit(1);
+        error(dim_error("ip_mat_blend"));
     }
 
     blend = ip_mat_create(h, w, k, 0);
@@ -529,12 +596,16 @@ ip_mat * ip_mat_blend(ip_mat *a, ip_mat *b, float alpha) {
 }
 
 ip_mat * ip_mat_brighten(ip_mat *a, float bright) {
+    check_null(a, "ip_mat_brighten");
+
     return ip_mat_add_scalar(a, bright);
 }
 
 ip_mat * ip_mat_corrupt(ip_mat *a, float amount) {
     ip_mat *noise;
     ip_mat *out;
+
+    check_null(a, "ip_mat_corrupt");
 
     noise = ip_mat_create(a -> h, a -> w, a -> k, 0);
     ip_mat_init_random(noise, 0, amount / 2);
@@ -550,6 +621,8 @@ ip_mat * ip_mat_corrupt(ip_mat *a, float amount) {
 ip_mat * ip_mat_padding(ip_mat *a, unsigned int pad_h, unsigned int pad_w) {
     ip_mat *out;
     unsigned int i, j, k;
+
+    check_null(a, "ip_mat_padding");
 
     out = ip_mat_create(a -> h + 2 * pad_h, a -> w + 2 * pad_w, a -> k, 0);
 
@@ -567,11 +640,16 @@ ip_mat * ip_mat_padding(ip_mat *a, unsigned int pad_h, unsigned int pad_w) {
 ip_mat * ip_mat_convolve (ip_mat *a, ip_mat *f) {
     ip_mat *pad;
     ip_mat *out;
-    int pad_h = (f -> h - 1) / 2;
-    int pad_w = (f -> w - 1) / 2;
+    int pad_h, pad_w;
     unsigned int i, j, k, l, p;
     float val;
-    
+
+    check_null(a, "ip_mat_padding");
+    check_null(a, "ip_mat_padding");
+
+    pad_h = (f -> h - 1) / 2;
+    pad_w = (f -> w - 1) / 2;
+
     pad = ip_mat_padding(a, pad_h, pad_w);
     out = ip_mat_create(a -> h, a -> w, a -> k, 0);
 

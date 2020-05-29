@@ -1,8 +1,12 @@
 /*
- Laboratorio di programmazione A.A. 2019/2020
-
- Sebastiano Vascon
-*/
+ * Laboratorio di programmazione A.A. 2019/2020
+ *
+ * Gruppo: 95
+ * Partecipanti: Grassi Marco
+ *
+ * Tutor: Sebastiano Vascon
+ *
+ * */
 
 #ifndef IP_LIB_H
 #define IP_LIB_H
