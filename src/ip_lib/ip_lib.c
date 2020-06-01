@@ -12,8 +12,8 @@
 #include "ip_lib.h"
 #include "../bmp/bmp.h"
 
-#define malloc_error(str) "\033[0;33m" str ": Error\n" "\033[0m" "Error during memory allocation\n"
-#define null_error(str) "\033[0;33m" str ": Invalidi input\n" "\033[0m" "ip_lib not initialized\n"
+#define malloc_error(str) "\033[0;31m" str ": Error\n" "\033[0m" "Error during memory allocation\n"
+#define null_error(str) "\033[0;31m" str ": Invalid input\n" "\033[0m" "ip_lib not initialized\n"
 #define dim_error(str) "\033[0;31m" str ": Invalid input\n" "\033[0m" "Input arguments must have same dimentions\n"
 #define coordinate_error(str) "\033[0;31m" str ": Invalid input\n" "\033[0m" "Invalid input coordinates\n"
 #define error(msg) printf(msg); exit(1)
